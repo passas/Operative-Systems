@@ -54,7 +54,7 @@ main ()
 static void buf_to_argv (char *buf, char **argv)
 {
 	int i, j;
-	int word, low;
+	int word;
 	int *flag_alloc;
 
 	flag_alloc = &j;
