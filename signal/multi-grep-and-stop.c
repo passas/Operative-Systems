@@ -18,7 +18,7 @@
 int the_one_who_shall_not_be_killed = -1;
 
 /*
-* This program focus on establish perseptions of results via "exec's".
+* This program focus on establish perceptions of the results via "exec's".
 * Will take a word to search and a maximum of 10 files.
 * Will execute grep on each file.
 * When one process finds the word, the others get shutdown.
