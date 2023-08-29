@@ -64,6 +64,7 @@ main (int argc, char *argv[])
 		if ( fork() == 0 )
 		{
 			dup2 (fifo_fd[1], 1);
+			close (fifo_fd[1]);
 			if ( execlp ("grep", "grep", argv[1], argv[2+i], NULL) == -1)
 				_exit (-1);
 			_exit (0);
@@ -78,7 +79,7 @@ main (int argc, char *argv[])
 		
 		if ( (bytes = read (fifo_fd[0], buf, BUS)) > 0 )
 		{
-			write (1, buf, bytes);
+			//write (1, buf, bytes);
 			kill (0, SIGUSR1); //all group processes (including father) must handle the signal
 			i = MAX; //only doable because of the zombie reaper who catches the SIGCHLD meantime
 		}		
