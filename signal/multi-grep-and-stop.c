@@ -56,6 +56,10 @@ main (int argc, char *argv[])
 	{
 		perror ("signal (SIGUSR1,...)");
 	}
+	if ( signal (SIGCHLD, signal_handler) == SIG_ERR )
+	{
+		perror ("signal (SIGCHLD,...)");
+	}
 
 	pipe (fifo_fd);
 
