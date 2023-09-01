@@ -1,211 +1,86 @@
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-//open
-#include <unistd.h>
-//lseek
-//write
-//read
-
 #include <stdlib.h>
-//atoi
+//malloc
+//free
 
 #include <string.h>
-//
+//strlen
+//strdup
 
 #include <stdio.h>
-//printf
+//sprintf
 
 #include "person.h"
 //typedef struct person *Person;
 
-static void insert (char name[], char age[]);
-static void update (char name[], char age[]);
-static void update_id (int id, char age[]);
-static void cat ();
-
-#define FILE_NAME "persons.bin"
-
-int main (int argc, char *argv[])
+struct person
 {
-	if (argc == 2)
-	{
-		if ( strcmp (argv[1], "-cat") == 0 ) //cat file into stdin
-		{
-			cat ();
-		}
-	}
+	int id;
+	char name[75];
+	int age;	
+};
 
-	else if (argc == 4)
-	{
-		if ( strcmp (argv[1], "-i") == 0) //insert
-		{
-			insert (argv[2], argv[3]);
-		}
-	
-		else if ( strcmp (argv[1], "-u") == 0 ) //update
-		{
-			int id;
-
-			id = atoi (argv[2]);
-			if (!id)
-				update (argv[2], argv[3]);
-			else
-				update_id (id, argv[3]);
-		}
-	}
-
-	_exit (0);
+size_t sizeof_Person ()
+{
+	return sizeof (struct person);
 }
 
-static void insert (char name[], char age[])
+int new_Person (int id, int age, const char *name, Person *p)
 {
-	int file;
-	off_t byte;	//int
-	ssize_t bytes; 
-	struct stat file_stat;
+	int error;
+	Person r;
 
-	file = open (FILE_NAME, O_CREAT | O_CLOEXEC | O_WRONLY | O_APPEND, 0666);
-	if (file == -1) //not opened
+	error = 0;
+	r = (Person) malloc (sizeof (struct person));
+	if (r)
 	{
-		return;
+		r->id = id;
+		r->age = age;
+		strcpy (r->name, name);
+		
+		(*p) = r;
+	}
+	else {
+		error = 1;
+		(*p) = NULL;
 	}
 
+	return error;
+}
+
+char *getName_Person (Person p)
+{
+	return p->name;
+}
+
+void setAge_Person (int age, Person *p)
+{
+	(*p)->age = age;
+}
+
+int str_Person (Person p, char **str)
+{
+	int error;
+	char *r;
+
+	error = 0;
+	if (!p)
+	{
+		error = -1;
+	}
 	else
 	{
-		int error;
-		Person p; int id;
-
-		if ( fstat(file, &file_stat) == 0 ) //success
-			id = (file_stat.st_size / sizeof_Person ()) + 1;
+		r = malloc (sizeof (char) * 200);
+		if (!r)
+		{
+			error = 1;
+			(*str) = NULL;
+		}
 		else
-			id = 0;
-
-		error = new_Person (id, atoi(age), name, &p);
-		if (!error)
 		{
-			bytes = write (file, p, sizeof_Person());
+			sprintf (r, "%d: %s %d", p->id, p->name, p->age);
+			(*str) = r;
 		}
-
-		if ( fstat(file, &file_stat) == 0 ) //success
-		{
-			printf ("register %ld\n", file_stat.st_size / sizeof_Person () );
-		}
-		close (file);
 	}
 
-}
-
-static void update (char name[], char age[])
-{
-	int file;
-	int error;
-	ssize_t bytes;
-	Person p;
-
-	file = open (FILE_NAME, O_RDWR);
-	if (file == -1)
-	{
-		return;
-	}
-
-	else {
-		error = new_Person (0, 0, "", &p);
-
-		if (!error)
-		{
-			while ( ( bytes = read (file, p, sizeof_Person()) ) > 0 )
-			{
-				if ( strcmp(getName_Person(p), name) == 0 ) //match
-				{
-					setAge_Person (atoi(age), &p);
-
-					lseek (file, (-1) * sizeof_Person(), SEEK_CUR);
-					bytes = write (file, p, sizeof_Person());
-					if (bytes == -1)
-					{
-						printf ("error on update\n");
-					}
-					break; //end of read cycle / entry search
-				}
-			}
-			free (p);
-		}
-	
-		close (file);
-	}
-}
-
-static void update_id (int id, char age[])
-{
-	int file;
-	int error;
-	ssize_t bytes;
-	Person p;
-
-	file = open (FILE_NAME, O_RDWR);
-	if (file == -1)
-	{
-		return;
-	}
-
-	else {
-		error = new_Person (0, 0, "", &p);
-
-		if (!error)
-		{
-			lseek (file, (id-1) * sizeof_Person(), SEEK_SET);
-
-			bytes = read (file, p, sizeof_Person());
-			if (bytes)
-			{
-				setAge_Person (atoi(age), &p);
-
-				lseek (file, (-1) * sizeof_Person(), SEEK_CUR);
-				bytes = write (file, p, sizeof_Person());
-				if (bytes == -1)
-				{
-					printf ("error on update\n");
-				}
-			}
-			free (p);
-		}
-		close (file);
-	}
-}
-
-static void cat ()
-{
-	int file;
-	int error;
-	ssize_t bytes;
-	Person p; char *str;
-	
-	file = open (FILE_NAME, O_RDONLY, 0666);
-	if (file == -1) //not openned
-	{
-		return;
-	}
-
-	else
-	{
-		error = new_Person (0, 0, "", &p);
-
-		if (!error)
-		{
-			while ( ( bytes = read (file, p, sizeof_Person()) ) > 0 )
-			{
-				if ( str_Person (p, &str) == 0 )
-				{
-					//sprintf (str, "%s\n", str);
-					//write (STDIN_FILENO, str, strlen(str));
-					printf ("%s\n", str);
-					free (str);
-				}
-			}
-			free (p);
-		}
-	
-		close (file);
-	}
+	return error;
 }
